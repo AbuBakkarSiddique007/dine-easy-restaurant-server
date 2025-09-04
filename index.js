@@ -28,9 +28,17 @@ async function run() {
         await client.connect();
 
         const database = client.db("DineEasyDB");
+
+        const usersCollection = database.collection("users")
         const menuCollection = database.collection("menu");
         const reviewCollection = database.collection("reviews")
         const cartCollection = database.collection("carts")
+
+        app.post("/users", async (req, res) => {
+            const users = req.body
+            const result = await usersCollection.insertOne(users)
+            res.send(result)
+        })
 
         app.get("/menu", async (req, res) => {
             const result = await menuCollection.find().toArray()
