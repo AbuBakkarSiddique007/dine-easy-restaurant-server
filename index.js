@@ -1,5 +1,6 @@
 require('dotenv').config()
 const express = require("express")
+const jwt = require('jsonwebtoken');
 const app = express()
 const cors = require("cors")
 const port = process.env.PORT || 5000
@@ -34,8 +35,42 @@ async function run() {
         const reviewCollection = database.collection("reviews")
         const cartCollection = database.collection("carts")
 
+
+        // JWT related API
+        app.post('/jwt', async (req, res) => {
+            const user = req.body
+
+            // follow doc(Github):
+            const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
+                expiresIn: '1h'
+            })
+            res.send({ token })
+        })
+
+        // Middleware
+        const verifyToken = (req, res, next) => {
+            console.log("Inside verify token", req.headers.authorization);
+
+            if (!req.headers.authorization) {
+                return res.status(401).send({ message: 'Unauthorized access' });
+            }
+
+            const token = req.headers.authorization.split(' ')[1];
+
+            jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+                if (err) {
+                    return res.status(401).send({ message: 'Unauthorized access' });
+                }
+                // Success case - token is valid
+                req.decoded = decoded;
+                next();
+            });
+        }
+
         // Users related APIS
-        app.get("/users", async (req, res) => {
+        app.get("/users", verifyToken, async (req, res) => {
+            // console.log(req.headers);
+
             const result = await usersCollection.find().toArray()
             res.send(result)
         })
