@@ -34,22 +34,61 @@ async function run() {
         const reviewCollection = database.collection("reviews")
         const cartCollection = database.collection("carts")
 
+        // Users related APIS
+        app.get("/users", async (req, res) => {
+            const result = await usersCollection.find().toArray()
+            res.send(result)
+        })
+
         app.post("/users", async (req, res) => {
             const users = req.body
+
+            const query = { email: users.email }
+            const existUser = await usersCollection.findOne(query)
+            console.log(existUser);
+            if (existUser) {
+                return res.send({ message: "User Already exist.", insertedId: null })
+            }
+
             const result = await usersCollection.insertOne(users)
             res.send(result)
         })
 
+        app.delete("/users/:id", async (req, res) => {
+            const id = req.params.id
+            const filter = { _id: new ObjectId(id) }
+            const result = await usersCollection.deleteOne(filter)
+            res.send(result)
+        })
+
+        app.patch("/users/admin/:id", async (req, res) => {
+            const id = req.params.id
+            const filter = { _id: new ObjectId(id) }
+
+            const updateDoc = {
+                $set: {
+                    role: "admin"
+                }
+            }
+
+            const result = await usersCollection.updateOne(filter, updateDoc)
+            res.send(result)
+        })
+
+        // Menu Related APIS
         app.get("/menu", async (req, res) => {
             const result = await menuCollection.find().toArray()
             res.send(result)
         })
+
+        // Reviews Related APIS
         app.get("/reviews", async (req, res) => {
             const result = await reviewCollection.find().toArray()
             res.send(result)
         })
 
 
+        // Cart Related APIS
         app.get("/carts", async (req, res) => {
             const email = req.query.email
             const query = { email: email }
