@@ -49,7 +49,7 @@ async function run() {
 
         // Middleware
         const verifyToken = (req, res, next) => {
-            console.log("Inside verify token", req.headers.authorization);
+            // console.log("Inside verify token", req.headers.authorization);
 
             if (!req.headers.authorization) {
                 return res.status(401).send({ message: 'Unauthorized access' });
@@ -67,8 +67,21 @@ async function run() {
             });
         }
 
+        // custom=> For verifying the user is Actual admin or not
+        // use verify admin after verifyToken
+        const verifyAdmin = async (req, res, next) => {
+            const email = req.decoded.email
+            const query = { email: email }
+            const user = await usersCollection.findOne(query)
+            const isAdmin = user?.role === 'admin'
+            if (!isAdmin) {
+                return res.status(403).send({ message: 'forbidden access' })
+            }
+            next();
+        }
+
         // Users related APIS
-        app.get("/users", verifyToken, async (req, res) => {
+        app.get("/users", verifyToken,verifyAdmin, async (req, res) => {
             // console.log(req.headers);
 
             const result = await usersCollection.find().toArray()
@@ -89,7 +102,7 @@ async function run() {
             res.send(result)
         })
 
-        app.delete("/users/:id", async (req, res) => {
+        app.delete("/users/:id",verifyToken,verifyAdmin, async (req, res) => {
             const id = req.params.id
             const filter = { _id: new ObjectId(id) }
             const result = await usersCollection.deleteOne(filter)
@@ -108,6 +121,23 @@ async function run() {
 
             const result = await usersCollection.updateOne(filter, updateDoc)
             res.send(result)
+        })
+
+        // Check Admin
+        app.get('/users/admin/:email', verifyToken,verifyAdmin, async (req, res) => {
+            const email = req.params.email
+
+            if (email !== req.decoded.email) {
+                return res.status(403).send({ message: "forbidden access" })
+            }
+
+            const query = { email: email }
+            const user = await usersCollection.findOne(query)
+            let admin = false
+            if (user) {
+                admin = user?.role === 'admin'
+            }
+            res.send({ admin })
         })
 
         // Menu Related APIS
