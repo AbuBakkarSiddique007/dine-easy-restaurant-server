@@ -141,14 +141,21 @@ async function run() {
         })
 
         // Menu Related APIS
-        app.get("/menu",verifyToken,verifyAdmin, async (req, res) => {
+        app.get("/menu", async (req, res) => {
             const result = await menuCollection.find().toArray()
             res.send(result)
         })
 
-        app.post('/menu', async (req, res) => {
+        app.post('/menu', verifyToken, verifyAdmin, async (req, res) => {
             const menuItem = req.body
             const result = await menuCollection.insertOne(menuItem)
+            res.send(result)
+        })
+
+        app.delete('/menu/:id',verifyToken,verifyAdmin, async (req, res) => {
+            const id = req.params.id
+            const filter = { _id: new ObjectId(id) }
+            const result = await menuCollection.deleteOne(filter)
             res.send(result)
         })
 
