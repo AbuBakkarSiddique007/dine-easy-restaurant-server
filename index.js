@@ -81,7 +81,7 @@ async function run() {
         }
 
         // Users related APIS
-        app.get("/users", verifyToken,verifyAdmin, async (req, res) => {
+        app.get("/users", verifyToken, verifyAdmin, async (req, res) => {
             // console.log(req.headers);
 
             const result = await usersCollection.find().toArray()
@@ -102,7 +102,7 @@ async function run() {
             res.send(result)
         })
 
-        app.delete("/users/:id",verifyToken,verifyAdmin, async (req, res) => {
+        app.delete("/users/:id", verifyToken, verifyAdmin, async (req, res) => {
             const id = req.params.id
             const filter = { _id: new ObjectId(id) }
             const result = await usersCollection.deleteOne(filter)
@@ -124,7 +124,7 @@ async function run() {
         })
 
         // Check Admin
-        app.get('/users/admin/:email', verifyToken,verifyAdmin, async (req, res) => {
+        app.get('/users/admin/:email', verifyToken, verifyAdmin, async (req, res) => {
             const email = req.params.email
 
             if (email !== req.decoded.email) {
@@ -141,8 +141,14 @@ async function run() {
         })
 
         // Menu Related APIS
-        app.get("/menu", async (req, res) => {
+        app.get("/menu",verifyToken,verifyAdmin, async (req, res) => {
             const result = await menuCollection.find().toArray()
+            res.send(result)
+        })
+
+        app.post('/menu', async (req, res) => {
+            const menuItem = req.body
+            const result = await menuCollection.insertOne(menuItem)
             res.send(result)
         })
 
