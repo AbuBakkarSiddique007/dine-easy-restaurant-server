@@ -146,60 +146,86 @@ async function run() {
             res.send(result)
         })
 
-        app.post('/menu', verifyToken, verifyAdmin, async (req, res) => {
-            const menuItem = req.body
-            const result = await menuCollection.insertOne(menuItem)
-            res.send(result)
-        })
-
-        app.delete('/menu/:id',verifyToken,verifyAdmin, async (req, res) => {
+        app.get("/menu/:id", async (req, res) => {
             const id = req.params.id
             const filter = { _id: new ObjectId(id) }
-            const result = await menuCollection.deleteOne(filter)
+            const result = await menuCollection.findOne(filter)
             res.send(result)
         })
 
-        // Reviews Related APIS
-        app.get("/reviews", async (req, res) => {
-            const result = await reviewCollection.find().toArray()
-            res.send(result)
-        })
-
-
-        // Cart Related APIS
-        app.get("/carts", async (req, res) => {
-            const email = req.query.email
-            const query = { email: email }
-
-            const result = await cartCollection.find(query).toArray()
-            res.send(result)
-        })
-
-        app.post("/carts", async (req, res) => {
-            const cartItem = req.body
-            const result = await cartCollection.insertOne(cartItem)
-            res.send(result)
-        })
-
-        app.delete("/carts/:id", async (req, res) => {
+        app.patch('/menu/:id', async (req, res) => {
             const id = req.params.id
-            const query = { _id: new ObjectId(id) }
-            const result = await cartCollection.deleteOne(query)
+            const item = req.body
+
+            const filter = { _id: new ObjectId(id) }
+            const updateDoc = {
+                $set: {
+                    name: item.name,
+                    category: item.category,
+                    recipe: item.recipe,
+                    price: item.price,
+                    image: item.image
+                },
+            };
+
+            const result = await menuCollection.updateOne(filter, updateDoc)
             res.send(result)
         })
 
+    app.post('/menu', verifyToken, verifyAdmin, async (req, res) => {
+        const menuItem = req.body
+        const result = await menuCollection.insertOne(menuItem)
+        res.send(result)
+    })
+
+    app.delete('/menu/:id', verifyToken, verifyAdmin, async (req, res) => {
+        const id = req.params.id
+        const filter = { _id: new ObjectId(id) }
+        const result = await menuCollection.deleteOne(filter)
+        res.send(result)
+    })
+
+    // Reviews Related APIS
+    app.get("/reviews", async (req, res) => {
+        const result = await reviewCollection.find().toArray()
+        res.send(result)
+    })
+
+
+    // Cart Related APIS
+    app.get("/carts", async (req, res) => {
+        const email = req.query.email
+        const query = { email: email }
+
+        const result = await cartCollection.find(query).toArray()
+        res.send(result)
+    })
+
+    app.post("/carts", async (req, res) => {
+        const cartItem = req.body
+        const result = await cartCollection.insertOne(cartItem)
+        res.send(result)
+    })
+
+    app.delete("/carts/:id", async (req, res) => {
+        const id = req.params.id
+        const query = { _id: new ObjectId(id) }
+        const result = await cartCollection.deleteOne(query)
+        res.send(result)
+    })
 
 
 
 
 
-        // Send a ping to confirm a successful connection
-        await client.db("admin").command({ ping: 1 });
-        console.log("Pinged your deployment. You successfully connected to MongoDB!");
-    } finally {
-        // Ensures that the client will close when you finish/error
-        // await client.close();
-    }
+
+    // Send a ping to confirm a successful connection
+    await client.db("admin").command({ ping: 1 });
+    console.log("Pinged your deployment. You successfully connected to MongoDB!");
+} finally {
+    // Ensures that the client will close when you finish/error
+    // await client.close();
+}
 }
 run().catch(console.dir);
 
