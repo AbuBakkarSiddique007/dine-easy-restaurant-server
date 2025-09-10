@@ -263,6 +263,44 @@ async function run() {
 
 
 
+        // Stats
+        app.get('/admin-stats', verifyToken, verifyAdmin, async (req, res) => {
+            const users = await usersCollection.estimatedDocumentCount()
+            const menuItems = await menuCollection.estimatedDocumentCount()
+            const orders = await paymentCollection.estimatedDocumentCount()
+
+            //1. FindOut the total revenue: (BanglaSystem)
+            // const payments = await paymentCollection.find().toArray()
+            // const revenue = payments.reduce((total, payment)=> total+payment.price, 0 )
+
+            //1.1 FindOut the total revenue: (Better way)
+            const result = await paymentCollection.aggregate([
+                {
+                    $group: {
+                        _id: null,
+                        totalRevenue: {
+                            $sum: '$price'
+                        }
+                    }
+
+                },
+            ]).toArray()
+            const revenue = result.length > 0 ? result[0].totalRevenue : 0;
+
+
+
+
+            res.send(
+                {
+                    users,
+                    menuItems,
+                    orders,
+                    revenue
+                }
+            )
+        })
+
+
 
 
 
