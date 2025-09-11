@@ -108,7 +108,7 @@ async function run() {
             res.send(result)
         })
 
-        app.patch("/users/admin/:id", async (req, res) => {
+        app.patch("/users/admin/:id",verifyToken,verifyAdmin, async (req, res) => {
             const id = req.params.id
             const filter = { _id: new ObjectId(id) }
 
@@ -123,7 +123,7 @@ async function run() {
         })
 
         // Check Admin
-        app.get('/users/admin/:email', verifyToken, verifyAdmin, async (req, res) => {
+        app.get('/users/admin/:email', verifyToken, async (req, res) => {
             const email = req.params.email
 
             if (email !== req.decoded.email) {
