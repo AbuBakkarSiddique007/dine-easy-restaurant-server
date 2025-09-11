@@ -10,10 +10,8 @@ const port = process.env.PORT || 5000
 app.use(express.json())
 app.use(cors())
 
-
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.p62hq.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
-
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
@@ -27,7 +25,7 @@ const client = new MongoClient(uri, {
 async function run() {
     try {
         // Connect the client to the server	(optional starting in v4.7)
-        await client.connect();
+        // await client.connect();
 
         const database = client.db("DineEasyDB");
 
@@ -36,7 +34,6 @@ async function run() {
         const reviewCollection = database.collection("reviews")
         const cartCollection = database.collection("carts")
         const paymentCollection = database.collection("payments")
-
 
         // JWT related API
         app.post('/jwt', async (req, res) => {
@@ -216,8 +213,6 @@ async function run() {
             res.send(result)
         })
 
-
-
         // payment intent
         // Stripe:
         // https://docs.stripe.com/payments/quickstart?lang=node
@@ -262,7 +257,6 @@ async function run() {
         })
 
 
-
         // Stats
         app.get('/admin-stats', verifyToken, verifyAdmin, async (req, res) => {
             const users = await usersCollection.estimatedDocumentCount()
@@ -282,13 +276,9 @@ async function run() {
                             $sum: '$price'
                         }
                     }
-
                 },
             ]).toArray()
             const revenue = result.length > 0 ? result[0].totalRevenue : 0;
-
-
-
 
             res.send(
                 {
@@ -300,13 +290,53 @@ async function run() {
             )
         })
 
+        // Using aggregate pipeline
+        app.get('/order-stats', verifyToken, verifyAdmin, async (req, res) => {
 
+            const result = await paymentCollection.aggregate([
+                {
+                    $unwind: '$menuItemIds'
 
+                },
+                {
+                    $lookup: {
+                        from: 'menu',
+                        localField: 'menuItemIds',
+                        foreignField: '_id',
+                        as: 'menuItems'
+                    }
+                },
+                {
+                    $unwind: '$menuItems'
+                },
+                {
+                    $group: {
+                        _id: '$menuItems.category',
+                        quantity: {
+                            $sum: 1
+                        },
+                        revenue: {
+                            $sum: '$menuItems.price'
+                        }
+                    }
+                },
+                {
+                    $project: {
+                        _id: 0,
+                        category: '$_id',
+                        quantity: '$quantity',
+                        revenue: '$revenue'
+                    }
+                }
+
+            ]).toArray()
+            res.send(result)
+        })
 
 
         // Send a ping to confirm a successful connection
-        await client.db("admin").command({ ping: 1 });
-        console.log("Pinged your deployment. You successfully connected to MongoDB!");
+        // await client.db("admin").command({ ping: 1 });
+        // console.log("Pinged your deployment. You successfully connected to MongoDB!");
     } finally {
         // Ensures that the client will close when you finish/error
         // await client.close();
