@@ -92,7 +92,7 @@ async function run() {
 
             const query = { email: users.email }
             const existUser = await usersCollection.findOne(query)
-            console.log(existUser);
+            // console.log(existUser);
             if (existUser) {
                 return res.send({ message: "User Already exist.", insertedId: null })
             }
@@ -108,7 +108,7 @@ async function run() {
             res.send(result)
         })
 
-        app.patch("/users/admin/:id",verifyToken,verifyAdmin, async (req, res) => {
+        app.patch("/users/admin/:id", verifyToken, verifyAdmin, async (req, res) => {
             const id = req.params.id
             const filter = { _id: new ObjectId(id) }
 
@@ -185,6 +185,13 @@ async function run() {
         })
 
         // Reviews Related APIS
+        app.post('/reviews', async (req, res) => {
+            const reviewData = req.body;
+
+            const result = await reviewCollection.insertOne(reviewData);
+            res.send(result);
+        });
+
         app.get("/reviews", async (req, res) => {
             const result = await reviewCollection.find().toArray()
             res.send(result)
@@ -236,7 +243,7 @@ async function run() {
             const payment = req.body
             const paymentResult = await paymentCollection.insertOne(payment)
 
-            console.log("Payment info-->", payment);
+            // console.log("Payment info-->", payment);
             const query = {
                 _id: {
                     $in: payment.cartIds.map(id => new ObjectId(id))
