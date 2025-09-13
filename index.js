@@ -10,8 +10,8 @@ const port = process.env.PORT || 5000
 app.use(express.json())
 app.use(cors({
     origin: [
-        "http://localhost:5173", 
-        "https://dine-easy-restaurant-client.vercel.app"
+        "http://localhost:5173",
+        "https://dineeasyrestaurant.web.app"
     ],
     credentials: true
 }))
