@@ -8,7 +8,13 @@ const port = process.env.PORT || 5000
 
 // Middleware
 app.use(express.json())
-app.use(cors())
+app.use(cors({
+    origin: [
+        "http://localhost:5173", 
+        "https://dine-easy-restaurant-client.vercel.app"
+    ],
+    credentials: true
+}))
 
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.p62hq.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
@@ -339,6 +345,50 @@ async function run() {
             ]).toArray()
             res.send(result)
         })
+
+        // Users-stats:
+        app.get("/users-stats/:email", verifyToken, async (req, res) => {
+            const email = req.params.email
+
+            if (email !== req.decoded.email) {
+                return res.status(403).send({ message: 'forbidden access' });
+            }
+
+            const filter = { email: email }
+            const totalOrders = await paymentCollection.countDocuments(filter)
+            const totalReviews = await reviewCollection.countDocuments(filter)
+
+            const spentResult = await paymentCollection.aggregate([
+                {
+                    $match: {
+                        email: email
+                    }
+                },
+                {
+                    $group: {
+                        _id: null,
+                        totalSpent: {
+                            $sum: '$price'
+                        }
+                    }
+
+                }
+            ]).toArray()
+
+            const totalSpent = spentResult.length > 0 ? spentResult[0].totalSpent : 0;
+
+            res.send({
+                totalOrders,
+                totalReviews,
+                totalSpent
+            })
+        })
+
+
+
+
+
+
 
 
         // Send a ping to confirm a successful connection
